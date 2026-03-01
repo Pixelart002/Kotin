@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">LU VIIO UPI Alert</string>
+    <string name="app_full_name">LU VIIO - UPI Voice Alert</string>
+    <string name="app_tagline">No Hardware Soundbox</string>
+    
+    <!-- Main Screen -->
+    <string name="service_status">SERVICE STATUS</string>
+    <string name="status_checking">Checking permissions...</string>
+    <string name="status_ready">✅ Ready - Listening for UPI Payments</string>
+    <string name="status_permission_needed">⚠️ Notification Access Required</string>
+    <string name="status_running">🎧 Service Running - Listening...</string>
+    
+    <!-- Buttons -->
+    <string name="btn_start">Start Service</string>
+    <string name="btn_grant_permission">Grant Permission</string>
+    <string name="btn_settings">⚙️ Settings</string>
+    
+    <!-- Stats -->
+    <string name="today">Today</string>
+    <string name="week">Week</string>
+    <string name="month">Month</string>
+    
+    <!-- Languages -->
+    <string name="hindi">हिन्दी</string>
+    <string name="english">English</string>
+    
+    <!-- Footer -->
+    <string name="footer">📱 Made with ❤️ by LU VIIO | No Hardware Required</string>
+</resources>
