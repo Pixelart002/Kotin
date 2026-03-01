@@ -1,0 +1,32 @@
+{
+  "name": "upi-voice-alert",
+  "version": "1.0.0",
+  "description": "UPI Voice Alert - Offline notification announcement system",
+  "type": "module",
+  "scripts": {
+    "dev": "ionic serve",
+    "build": "ionic build",
+    "build:prod": "ionic build --prod",
+    "cap:build:android": "cap build android --keystorepath=keystore.jks --keystorealiasname=release --keystorepassword=$KEYSTORE_PASSWORD --keystorealiaspassword=$KEYSTORE_ALIAS_PASSWORD",
+    "cap:sync": "cap sync",
+    "cap:add": "cap add android",
+    "cap:open": "cap open android",
+    "lint": "eslint . && prettier --check ."
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/platform": "^6.0.0",
+    "@ionic/angular": "^7.0.0",
+    "@ionic/vue": "^7.0.0",
+    "@ionic/react": "^7.0.0",
+    "ionic": "^7.0.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  }
+}
