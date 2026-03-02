@@ -8,7 +8,8 @@ import android.widget.Button
 import android.widget.Toast
 
 class MainActivity : Activity() {
-    override fun onCreate(saved(InstanceState: Bundle?)) {
+    // Yahan syntax theek kar diya gaya hai
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         val button = Button(this).apply {
