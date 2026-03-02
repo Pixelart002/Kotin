@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "ionic serve",
-    "build": "ionic build",
-    "build:prod": "ionic build --prod",
+    "build": "mkdir -p dist && cp -r src/* dist/",
+    "build:prod": "mkdir -p dist && cp -r src/* dist/",
     "cap:build:android": "cap build android --keystorepath=keystore.jks --keystorealiasname=release --keystorepassword=$KEYSTORE_PASSWORD --keystorealiaspassword=$KEYSTORE_ALIAS_PASSWORD",
     "cap:sync": "cap sync",
     "cap:add": "cap add android",
