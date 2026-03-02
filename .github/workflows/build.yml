@@ -23,7 +23,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          # Don't cache Gradle yet - files don't exist
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -31,9 +30,9 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install dependencies
+      - name: Install dependencies (using npm install instead of ci)
         run: |
-          npm ci
+          npm install
           npm install -g @capacitor/cli
 
       - name: Build web app
@@ -42,17 +41,17 @@ jobs:
           npm run build:prod
 
       - name: Add Android platform
-        run: |
-          npx cap add android
-          # Now Gradle files exist!
+        run: npx cap add android
 
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Make Gradle executable
+        run: cd android && chmod +x gradlew
+
       - name: Build APK
         run: |
           cd android
-          chmod +x gradlew
           ./gradlew assembleDebug
 
       - name: Upload APK
