@@ -33,10 +33,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # Cache hata diya hai kyunki package-lock.json abhi repo mein nahi hai
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install # 'npm ci' ki jagah 'npm install' use kar rahe hain
       
       - name: Install Capacitor CLI
         run: npm install -g @capacitor/cli
@@ -60,6 +60,7 @@ jobs:
         if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main')
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug
       
       - name: Build release APK
@@ -71,6 +72,7 @@ jobs:
           KEYSTORE_PATH: keystore.jks
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleRelease bundleRelease
       
       - name: Upload debug APK
@@ -113,6 +115,7 @@ jobs:
         if: always()
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew test || true
       
       - name: Upload test results
