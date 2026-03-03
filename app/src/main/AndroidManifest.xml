@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.upi.announcer">
 
+
+
+
+<uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+
+
     <application
         android:label="UPI Announcer"
         android:theme="@android:style/Theme.DeviceDefault.Light">

@@ -1,73 +1,135 @@
 package com.upi.announcer
 
-import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
-import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import java.util.Locale
 
-// Yahan humne TextToSpeech ko bhi implement kar liya test karne ke liye
-class MainActivity : Activity(), TextToSpeech.OnInitListener {
-    
+class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
+
     private lateinit var tts: TextToSpeech
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Test button ke liye Offline TTS initialize kar rahe hain
         tts = TextToSpeech(this, this)
 
-        // Screen ka layout banate hain (Upar-neeche buttons ke liye)
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 100, 50, 50)
-        }
-        
-        // Pehla Button: Permission ke liye
-        val permissionButton = Button(this).apply {
-            text = "1. Enable Notification Access"
-            textSize = 18f
-            setOnClickListener {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                Toast.makeText(context, "Please allow 'UPI Announcer' here", Toast.LENGTH_LONG).show()
+        // 🚀 Jetpack Compose UI Start
+        setContent {
+            MaterialTheme(
+                colorScheme = lightColorScheme(
+                    primary = Color(0xFF2563EB), // Smooth UI jaisa Blue
+                    background = Color(0xFFF8FAFC)
+                )
+            ) {
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    AppScreen()
+                }
             }
         }
-        
-        // Dusra Button: Test Voice ke liye
-        val testButton = Button(this).apply {
-            text = "2. Test Voice Announcement"
-            textSize = 18f
-            // Thoda gap dene ke liye
-            setPadding(0, 20, 0, 20)
-            
-            setOnClickListener {
-                val samplePayment = "Received ₹500 from Rahul on Paytm"
-                // Button dabate hi phone dummy payment bolega
-                tts.speak(samplePayment, TextToSpeech.QUEUE_FLUSH, null, "")
-                Toast.makeText(context, "Testing voice...", Toast.LENGTH_SHORT).show()
-            }
-        }
-        
-        // Dono buttons ko layout me daal do
-        layout.addView(permissionButton)
-        layout.addView(testButton)
-        
-        // Layout ko screen par set kar do
-        setContentView(layout)
     }
 
-    // TTS ko Hindi/Indian English me set karna
+    @Composable
+    fun AppScreen() {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "UPI Announcer Pro",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1E293B)
+            )
+            Text(
+                text = "Keep running in background",
+                fontSize = 14.sp,
+                color = Color(0xFF64748B),
+                modifier = Modifier.padding(bottom = 32.dp)
+            )
+
+            // Step 1: Notification Permission Card
+            ActionCard(
+                title = "1. Notification Access",
+                description = "Required to read UPI messages.",
+                buttonText = "Enable Access",
+                onClick = {
+                    startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    Toast.makeText(this@MainActivity, "Allow UPI Announcer", Toast.LENGTH_LONG).show()
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Step 2: Battery Optimization Fix (Background Kill roke ga)
+            ActionCard(
+                title = "2. Stop App Killing",
+                description = "Prevent phone from killing this app.",
+                buttonText = "Allow Background",
+                onClick = {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Step 3: Test Button
+            Button(
+                onClick = {
+                    tts.speak("Received ₹500 from Rahul on Paytm", TextToSpeech.QUEUE_FLUSH, null, "")
+                },
+                modifier = Modifier.fillMaxWidth().height(55.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)) // Green Color
+            ) {
+                Text("Test Voice Announcement", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+
+    // Modern Card Component
+    @Composable
+    fun ActionCard(title: String, description: String, buttonText: String, onClick: () -> Unit) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+                Text(text = description, fontSize = 14.sp, color = Color.Gray, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp))
+                Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+                    Text(buttonText)
+                }
+            }
+        }
+    }
+
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
             tts.language = Locale("hi", "IN")
         }
     }
 
-    // Jab app band ho toh TTS memory clear kar de
     override fun onDestroy() {
         tts.stop()
         tts.shutdown()
