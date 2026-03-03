@@ -24,13 +24,13 @@ jobs:
         with:
           gradle-version: '8.6'
 
-      - name: Build Production APK
-        # 🚀 'assembleDebug' ko 'assembleRelease' se badal diya production ke liye
-        run: gradle assembleRelease 
+      - name: Build Debug APK
+        # 🚀 Dubara assembleDebug use karein taaki APK auto-sign ho jaye
+        run: gradle assembleDebug 
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: UPI-Announcer-Production
-          # 🚀 Path bhi 'release' wala ho jayega
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          name: UPI-Announcer-App
+          # 🚀 Path ko wapas debug folder par set karein
+          path: app/build/outputs/apk/debug/app-debug.apk
