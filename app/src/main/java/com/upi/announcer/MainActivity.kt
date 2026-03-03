@@ -3,7 +3,6 @@ package com.upi.announcer
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.PowerManager
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
@@ -28,11 +27,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         super.onCreate(savedInstanceState)
         tts = TextToSpeech(this, this)
 
-        // 🚀 Jetpack Compose UI Start
         setContent {
             MaterialTheme(
                 colorScheme = lightColorScheme(
-                    primary = Color(0xFF2563EB), // Smooth UI jaisa Blue
+                    primary = Color(0xFF2563EB), 
                     background = Color(0xFFF8FAFC)
                 )
             ) {
@@ -65,10 +63,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            // Step 1: Notification Permission Card
+            // Step 1: Notification Access Permission
             ActionCard(
                 title = "1. Notification Access",
-                description = "Required to read UPI messages.",
+                description = "Required to read payment messages.",
                 buttonText = "Enable Access",
                 onClick = {
                     startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
@@ -78,10 +76,10 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Step 2: Battery Optimization Fix (Background Kill roke ga)
+            // Step 2: Battery Optimization Bypass
             ActionCard(
                 title = "2. Stop App Killing",
-                description = "Prevent phone from killing this app.",
+                description = "Allow app to run 24/7 in background.",
                 buttonText = "Allow Background",
                 onClick = {
                     val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
@@ -91,22 +89,22 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
-            // Step 3: Test Button
+            // Step 3: Updated Test Button (Matching new format)
             Button(
                 onClick = {
-                    tts.speak("Received ₹500 from Rahul on Paytm", TextToSpeech.QUEUE_FLUSH, null, "")
+                    // 🚀 Naya Format: Money received [Amount] Rupees from [Name]
+                    tts.speak("Money received 500 Rupees from Rahul", TextToSpeech.QUEUE_FLUSH, null, "")
                 },
                 modifier = Modifier.fillMaxWidth().height(55.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)) // Green Color
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)) 
             ) {
-                Text("Test Voice Announcement", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("Test Voice Format", fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }
 
-    // Modern Card Component
     @Composable
     fun ActionCard(title: String, description: String, buttonText: String, onClick: () -> Unit) {
         Card(

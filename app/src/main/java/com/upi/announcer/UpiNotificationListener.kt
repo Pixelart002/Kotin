@@ -8,7 +8,6 @@ import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import java.util.Locale
-import java.util.regex.Pattern
 
 class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnInitListener {
 
@@ -18,11 +17,11 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
     override fun onCreate() {
         super.onCreate()
         tts = TextToSpeech(this, this)
-        
         createNotificationChannel()
+        
         val notification = NotificationCompat.Builder(this, "SERVICE_CHANNEL")
             .setContentTitle("UPI Announcer Active")
-            .setContentText("Listening for all payment apps...")
+            .setContentText("Smartly extracting amount and name...")
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
@@ -39,77 +38,58 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
         val fullText = "$title $text $bigText"
         val fullTextLower = fullText.lowercase()
 
-        // 🚀 ADVANCED FILTER 1: Currency Detection
-        // Sirf un notifications ko pakdega jinme Amount ki baat ho rahi hai
-        val hasMoney = fullTextLower.contains("₹") || 
-                       fullTextLower.contains("rs") || 
-                       fullTextLower.contains("inr") ||
-                       fullTextLower.contains("rupees")
-
-        // 🚀 ADVANCED FILTER 2: Positive Keywords (Money Received)
+        // 1. Basic Filters (Money Received check)
         val isReceived = fullTextLower.contains("received") || 
                          fullTextLower.contains("credited") || 
-                         fullTextLower.contains("paid you") || 
-                         fullTextLower.contains("sent you") ||
-                         fullTextLower.contains("receive") ||
-                         fullTextLower.contains("success") && fullTextLower.contains("payment")
+                         fullTextLower.contains("paid you")
 
-        // 🚀 ADVANCED FILTER 3: Negative Keywords (Spam/Debit rokne ke liye)
-        // Isse "Paid to", "Sent to", ya "OTP" wali notifications filter ho jayengi
-        val isNotSpamOrDebit = !fullTextLower.contains("paid to") && 
-                               !fullTextLower.contains("sent to") && 
-                               !fullTextLower.contains("debited") && 
-                               !fullTextLower.contains("spent") &&
-                               !fullTextLower.contains("otp") &&
-                               !fullTextLower.contains("cashback won") &&
-                               !fullTextLower.contains("recharge")
+        val isNotDebit = !fullTextLower.contains("paid to") && 
+                         !fullTextLower.contains("sent to")
 
-        if (hasMoney && isReceived && isNotSpamOrDebit) {
-            // 🚀 ADVANCED CLEANING: Announcement ko natural banane ke liye
-            // "₹100" ko "100 Rupees" bolne ke liye formatting
-            val cleanText = formatAmountForSpeech(title, text)
-            speakOut(cleanText)
+        if (isReceived && isNotDebit) {
+            
+            // 🚀 ADVANCED REGEX EXTRACTION
+            // Amount nikaalne ke liye Pattern (₹100, Rs 100, etc.)
+            val amountRegex = Regex("""(?:₹|Rs\.?|INR)\s*(\d+(?:,\d{3})*(?:\.\d{1,2})?)""")
+            
+            // Name nikaalne ke liye Pattern (Jo 'from' ke baad aata hai)
+            val nameRegex = Regex("""(?:from|sent by)\s+([^,.\n]+)""", RegexOption.IGNORE_CASE)
+
+            val amountMatch = amountRegex.find(fullText)
+            val nameMatch = nameRegex.find(fullText)
+
+            val amount = amountMatch?.groupValues?.get(1) ?: ""
+            // Agar name nahi mila toh fallback 'Customer' ya cleaner text use karega
+            var senderName = nameMatch?.groupValues?.get(1)?.trim() ?: "Customer"
+            
+            // Clean name (Faltu details hatana)
+            if (senderName.contains("A/c", ignoreCase = true)) senderName = "Customer"
+
+            if (amount.isNotEmpty()) {
+                // Final Speech Format: "Money received [Amount] Rupees from [Name]"
+                val finalAnnouncement = "Money received $amount Rupees from $senderName"
+                speakOut(finalAnnouncement)
+            }
         }
-    }
-
-    private fun formatAmountForSpeech(title: String, text: String): String {
-        // Amount aur Sender Name ko saaf karne ke liye logic
-        var announcement = "$title $text"
-        
-        // Symbols ko words me badalna taaki TTS sahi se bole
-        announcement = announcement.replace("₹", " Rupees ")
-        announcement = announcement.replace("Rs.", " Rupees ")
-        announcement = announcement.replace("INR", " Rupees ")
-        
-        // Faltu characters hatana
-        return announcement.replace(Regex("[^a-zA-Z0-9. ₹]"), " ")
     }
 
     private fun speakOut(text: String) {
         if (isTtsReady) {
-            // QUEUE_ADD ensures multiple payments don't overlap
             tts.speak(text, TextToSpeech.QUEUE_ADD, null, "UpiTask")
         }
     }
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            val result = tts.setLanguage(Locale("hi", "IN"))
-            if (result != TextToSpeech.LANG_MISSING_DATA) {
-                isTtsReady = true
-            }
+            tts.language = Locale("hi", "IN")
+            isTtsReady = true
         }
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                "SERVICE_CHANNEL",
-                "UPI Service Channel",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(serviceChannel)
+            val channel = NotificationChannel("SERVICE_CHANNEL", "UPI Service", NotificationManager.IMPORTANCE_LOW)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
     }
 
