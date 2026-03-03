@@ -14,10 +14,11 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
         "com.phonepe.app.business",               // PhonePe Business
         "com.google.android.apps.nbu.paisa.merchant", // GPay Business
         "com.paytm.business",                     // Paytm Business
-        "net.one97.paytm",                        // Paytm (Normal)
+        "net.one97.paytm", // Paytm (Normal)
         "com.phonepe.app",                        // PhonePe (Normal)
         "com.google.android.apps.nbu.paisa.user", // GPay (Normal)
-        "in.org.npci.upiapp"                      // BHIM UPI (Normal)
+        "in.org.npci.upiapp",                      // BHIM UPI (Normal)
+        "com.naviapp"
     )
 
     override fun onCreate() {
