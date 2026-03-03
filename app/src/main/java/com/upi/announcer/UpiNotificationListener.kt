@@ -35,7 +35,7 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
         val notification = NotificationCompat.Builder(this, "SERVICE_CHANNEL")
             .setContentTitle("UPI Announcer Active")
             .setContentText("Listening for payment notifications...")
-            .setSmallIcon(android.R.drawable.ic_lock_idle_low)
+            .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
         
