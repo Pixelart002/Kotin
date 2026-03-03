@@ -35,38 +35,42 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
         val text = extras.getString("android.text") ?: ""
         val bigText = extras.getString("android.bigText") ?: ""
 
-        val fullText = "$title $text $bigText"
+        // Maharaj Singh pattern ke liye puri text combine kari
+        val fullText = "$title $text $bigText".replace("\n", " ")
         val fullTextLower = fullText.lowercase()
 
-        // 1. Basic Filters (Money Received check)
+        // Money Received check
         val isReceived = fullTextLower.contains("received") || 
                          fullTextLower.contains("credited") || 
-                         fullTextLower.contains("paid you")
+                         fullTextLower.contains("paid you") ||
+                         fullTextLower.contains("has sent") // 🚀 PhonePe Fix
 
         val isNotDebit = !fullTextLower.contains("paid to") && 
                          !fullTextLower.contains("sent to")
 
         if (isReceived && isNotDebit) {
-            
-            // 🚀 ADVANCED REGEX EXTRACTION
-            // Amount nikaalne ke liye Pattern (₹100, Rs 100, etc.)
+            // Amount Regex
             val amountRegex = Regex("""(?:₹|Rs\.?|INR)\s*(\d+(?:,\d{3})*(?:\.\d{1,2})?)""")
             
-            // Name nikaalne ke liye Pattern (Jo 'from' ke baad aata hai)
-            val nameRegex = Regex("""(?:from|sent by)\s+([^,.\n]+)""", RegexOption.IGNORE_CASE)
+            // Name Regex: Handles "Maharaj Singh has sent" OR "from Rahul"
+            val nameRegex = Regex("""(?:(.*)\s+has sent|(?:from|sent by)\s+([^,.\n]+))""", RegexOption.IGNORE_CASE)
 
             val amountMatch = amountRegex.find(fullText)
             val nameMatch = nameRegex.find(fullText)
 
             val amount = amountMatch?.groupValues?.get(1) ?: ""
-            // Agar name nahi mila toh fallback 'Customer' ya cleaner text use karega
-            var senderName = nameMatch?.groupValues?.get(1)?.trim() ?: "Customer"
             
-            // Clean name (Faltu details hatana)
-            if (senderName.contains("A/c", ignoreCase = true)) senderName = "Customer"
+            // Name extraction logic
+            var senderName = nameMatch?.groupValues?.get(1)?.trim() 
+                             ?: nameMatch?.groupValues?.get(2)?.trim() 
+                             ?: "Customer"
+            
+            if (senderName.lowercase().contains("money received")) {
+                senderName = senderName.replace("Money received", "", ignoreCase = true).trim()
+            }
+            if (senderName.isBlank()) senderName = "Customer"
 
             if (amount.isNotEmpty()) {
-                // Final Speech Format: "Money received [Amount] Rupees from [Name]"
                 val finalAnnouncement = "Money received $amount Rupees from $senderName"
                 speakOut(finalAnnouncement)
             }
