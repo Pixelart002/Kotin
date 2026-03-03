@@ -1,6 +1,5 @@
 package com.upi.announcer
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
@@ -9,32 +8,21 @@ import android.service.notification.StatusBarNotification
 import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import java.util.Locale
+import java.util.regex.Pattern
 
 class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnInitListener {
 
     private lateinit var tts: TextToSpeech
     private var isTtsReady = false
 
-    private val targetApps = setOf(
-        "com.phonepe.app.business",
-        "com.google.android.apps.nbu.paisa.merchant",
-        "com.paytm.business",
-        "net.one97.paytm",
-        "com.phonepe.app",
-        "com.google.android.apps.nbu.paisa.user",
-        "in.org.npci.upiapp",
-        "com.naviapp"
-    )
-
     override fun onCreate() {
         super.onCreate()
         tts = TextToSpeech(this, this)
         
-        // 🚀 PRODUCTION FIX: Background mein zinda rehne ke liye ek notification dikhana zaruri hai
         createNotificationChannel()
         val notification = NotificationCompat.Builder(this, "SERVICE_CHANNEL")
             .setContentTitle("UPI Announcer Active")
-            .setContentText("Listening for payment notifications...")
+            .setContentText("Listening for all payment apps...")
             .setSmallIcon(android.R.drawable.stat_notify_chat)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .build()
@@ -43,36 +31,63 @@ class UpiNotificationListener : NotificationListenerService(), TextToSpeech.OnIn
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        val packageName = sbn.packageName
-        
-        if (targetApps.contains(packageName)) {
-            val extras = sbn.notification.extras
-            val title = extras.getString("android.title") ?: ""
-            val text = extras.getString("android.text") ?: ""
-            val bigText = extras.getString("android.bigText") ?: ""
+        val extras = sbn.notification.extras
+        val title = extras.getString("android.title") ?: ""
+        val text = extras.getString("android.text") ?: ""
+        val bigText = extras.getString("android.bigText") ?: ""
 
-            val fullTextLower = "$title $text $bigText".lowercase()
+        val fullText = "$title $text $bigText"
+        val fullTextLower = fullText.lowercase()
 
-            // Optimized Keywords
-            val hasMoneySymbol = fullTextLower.contains("₹") || fullTextLower.contains("rs") || fullTextLower.contains("inr")
-            val isReceived = fullTextLower.contains("received") || fullTextLower.contains("credited") || 
-                             fullTextLower.contains("paid you") || fullTextLower.contains("sent you") ||
-                             fullTextLower.contains("receive")
-                             
-            val isNotSent = !fullTextLower.contains("paid to") && !fullTextLower.contains("sent to") && 
-                            !fullTextLower.contains("debited") && !fullTextLower.contains("cashback won")
+        // 🚀 ADVANCED FILTER 1: Currency Detection
+        // Sirf un notifications ko pakdega jinme Amount ki baat ho rahi hai
+        val hasMoney = fullTextLower.contains("₹") || 
+                       fullTextLower.contains("rs") || 
+                       fullTextLower.contains("inr") ||
+                       fullTextLower.contains("rupees")
 
-            if (hasMoneySymbol && isReceived && isNotSent) {
-                // Formatting for cleaner speech (₹ symbol ko "Rupees" bulwane ke liye)
-                val cleanAnnouncement = "$title $text".replace("₹", " Rupees ")
-                speakOut(cleanAnnouncement)
-            }
+        // 🚀 ADVANCED FILTER 2: Positive Keywords (Money Received)
+        val isReceived = fullTextLower.contains("received") || 
+                         fullTextLower.contains("credited") || 
+                         fullTextLower.contains("paid you") || 
+                         fullTextLower.contains("sent you") ||
+                         fullTextLower.contains("receive") ||
+                         fullTextLower.contains("success") && fullTextLower.contains("payment")
+
+        // 🚀 ADVANCED FILTER 3: Negative Keywords (Spam/Debit rokne ke liye)
+        // Isse "Paid to", "Sent to", ya "OTP" wali notifications filter ho jayengi
+        val isNotSpamOrDebit = !fullTextLower.contains("paid to") && 
+                               !fullTextLower.contains("sent to") && 
+                               !fullTextLower.contains("debited") && 
+                               !fullTextLower.contains("spent") &&
+                               !fullTextLower.contains("otp") &&
+                               !fullTextLower.contains("cashback won") &&
+                               !fullTextLower.contains("recharge")
+
+        if (hasMoney && isReceived && isNotSpamOrDebit) {
+            // 🚀 ADVANCED CLEANING: Announcement ko natural banane ke liye
+            // "₹100" ko "100 Rupees" bolne ke liye formatting
+            val cleanText = formatAmountForSpeech(title, text)
+            speakOut(cleanText)
         }
+    }
+
+    private fun formatAmountForSpeech(title: String, text: String): String {
+        // Amount aur Sender Name ko saaf karne ke liye logic
+        var announcement = "$title $text"
+        
+        // Symbols ko words me badalna taaki TTS sahi se bole
+        announcement = announcement.replace("₹", " Rupees ")
+        announcement = announcement.replace("Rs.", " Rupees ")
+        announcement = announcement.replace("INR", " Rupees ")
+        
+        // Faltu characters hatana
+        return announcement.replace(Regex("[^a-zA-Z0-9. ₹]"), " ")
     }
 
     private fun speakOut(text: String) {
         if (isTtsReady) {
-            // 🚀 Audio Focus logic: Announcement ke waqt baaki aawaz dhire ho jayegi
+            // QUEUE_ADD ensures multiple payments don't overlap
             tts.speak(text, TextToSpeech.QUEUE_ADD, null, "UpiTask")
         }
     }
